@@ -1,0 +1,37 @@
+<h3>Installed Plugins</h3>
+
+<table class="table table-striped table-hover table-condensed table-hover">
+    <thead>
+    <tr>
+        <th class="settings_plugin_plugin_manager_plugins_name">{{ _('Name') }}</th>
+        <th class="settings_plugin_plugin_manager_plugins_actions">{{ _('Actions') }}</th>
+    </tr>
+    </thead>
+    <tbody data-bind="foreach: plugins.paginatedItems">
+    <tr>
+        <td class="settings_plugin_plugin_manager_plugins_name">
+            <span data-bind="text: name"></span> (<span data-bind="text: version"></span>) <a data-bind="visible: url, attr: {href: url}" href="#"><i class="icon-globe"></i></a><br />
+            <small class="muted" data-bind="text: description"></small><br/>
+            <small data-bind="visible: author">{{ _('by') }} <span data-bind="text: author"></span></small><br/>
+        </td>
+        <td class="settings_plugin_plugin_manager_plugins_actions">
+            <a href="#" class="icon-off" title="{{ _('Disable Plugin') }}" data-bind=""></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind=""></a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<div class="pagination pagination-mini pagination-centered">
+    <ul>
+        <li data-bind="css: {disabled: plugins.currentPage() === 0}"><a href="#" data-bind="click: plugins.prevPage">«</a></li>
+    </ul>
+    <ul data-bind="foreach: plugins.pages">
+        <li data-bind="css: { active: $data.number === $root.plugins.currentPage(), disabled: $data.number === -1 }"><a href="#" data-bind="text: $data.text, click: function() { $root.plugins.changePage($data.number); }"></a></li>
+    </ul>
+    <ul>
+        <li data-bind="css: {disabled: plugins.currentPage() === plugins.lastPage()}"><a href="#" data-bind="click: plugins.nextPage">»</a></li>
+    </ul>
+</div>
+
+
+<h3>Install new Plugin</h3>
+
