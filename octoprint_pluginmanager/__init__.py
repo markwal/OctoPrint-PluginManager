@@ -27,16 +27,16 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 
 	def get_assets(self):
 		return dict(
-			js=["js/plugin_manager.js"],
-			css=["css/plugin_manager.css"],
-			less=["less/plugin_manager.less"]
+			js=["js/pluginmanager.js"],
+			css=["css/pluginmanager.css"],
+			less=["less/pluginmanager.less"]
 		)
 
 	##~~ TemplatePlugin
 
 	def get_template_configs(self):
 		return [
-			dict(type="settings", template="plugin_manager_settings.jinja2", custom_bindings=True)
+			dict(type="settings", template="pluginmanager_settings.jinja2", custom_bindings=True)
 		]
 
 	##~~ SimpleApiPlugin

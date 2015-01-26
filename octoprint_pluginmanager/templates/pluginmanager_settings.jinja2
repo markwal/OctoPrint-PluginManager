@@ -10,9 +10,9 @@
     <tbody data-bind="foreach: plugins.paginatedItems">
     <tr>
         <td class="settings_plugin_plugin_manager_plugins_name">
-            <span data-bind="text: name"></span> (<span data-bind="text: version"></span>) <a data-bind="visible: url, attr: {href: url}" href="#"><i class="icon-globe"></i></a><br />
-            <small class="muted" data-bind="text: description"></small><br/>
-            <small data-bind="visible: author">{{ _('by') }} <span data-bind="text: author"></span></small><br/>
+            <div><span data-bind="text: name"></span> (<span data-bind="text: version"></span>) <a data-bind="visible: url, attr: {href: url}" href="#"><i class="icon-globe"></i></a></div>
+            <div><small class="muted" data-bind="text: description"></small></div>
+            <div data-bind="visible: author"><small>{{ _('by') }} <span data-bind="text: author"></span></small></div>
         </td>
         <td class="settings_plugin_plugin_manager_plugins_actions">
             <a href="#" class="icon-off" title="{{ _('Disable Plugin') }}" data-bind=""></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind=""></a>

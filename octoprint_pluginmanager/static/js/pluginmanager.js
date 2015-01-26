@@ -29,7 +29,7 @@ $(function() {
 
         self.requestData = function() {
             $.ajax({
-                url: API_BASEURL + "plugin/plugin_manager",
+                url: API_BASEURL + "plugin/pluginmanager",
                 type: "GET",
                 dataType: "json",
                 success: self.fromResponse
@@ -47,5 +47,5 @@ $(function() {
     }
 
     // view model class, parameters for constructor, container to bind to
-    ADDITIONAL_VIEWMODELS.push([PluginManagerViewModel, ["loginStateViewModel", "settingsViewModel"], document.getElementById("settings_plugin_plugin_manager")]);
+    ADDITIONAL_VIEWMODELS.push([PluginManagerViewModel, ["loginStateViewModel", "settingsViewModel"], document.getElementById("settings_plugin_pluginmanager")]);
 });
