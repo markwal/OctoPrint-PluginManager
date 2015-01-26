@@ -10,12 +10,16 @@
     <tbody data-bind="foreach: plugins.paginatedItems">
     <tr>
         <td class="settings_plugin_plugin_manager_plugins_name">
-            <div><span data-bind="text: name"></span> (<span data-bind="text: version"></span>) <a data-bind="visible: url, attr: {href: url}" href="#"><i class="icon-globe"></i></a></div>
+            <div><span data-bind="text: name"></span> (<span data-bind="text: version"></span>)</div>
             <div><small class="muted" data-bind="text: description"></small></div>
-            <div data-bind="visible: author"><small>{{ _('by') }} <span data-bind="text: author"></span></small></div>
+            <div>
+                <small data-bind="visible: url"><i class="icon-home"></i> <a data-bind="attr: {href: url}">{{ _('Homepage') }}</a></small>
+                <small data-bind="visible: license"><i class="icon-legal"></i> <span data-bind="text: license"></span></small>
+                <small data-bind="visible: author"><i class="icon-user"></i> <span data-bind="text: author"></span></small>
+            </div>
         </td>
         <td class="settings_plugin_plugin_manager_plugins_actions">
-            <a href="#" class="icon-off" title="{{ _('Disable Plugin') }}" data-bind=""></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind=""></a>
+            <a href="#" class="icon-off" title="{{ _('Disable Plugin') }}" data-bind="click: function() { $root.togglePlugin($data) }"></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind="click: function() { $root.uninstallPlugin($data) }"></a>
         </td>
     </tr>
     </tbody>
@@ -32,6 +36,20 @@
     </ul>
 </div>
 
-
 <h3>Install new Plugin</h3>
+
+<form class="form-horizontal">
+    <div class="control-group">
+        <label class="control-label">{{ _('URL') }}</label>
+        <div class="controls">
+            <input type="text" class="input-block-level" data-bind="value: installUrl" >
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <button type="submit" class="btn" data-bind="click: function() { $root.installPlugin(); }">{{ _('Install') }}</button>
+        </div>
+    </div>
+</form>
+
 
