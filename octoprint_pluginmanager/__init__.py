@@ -6,19 +6,10 @@ __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agp
 __copyright__ = "Copyright (C) 2014 The OctoPrint Project - Released under terms of the AGPLv3 License"
 
 
-__plugin_name__ = "Plugin Manager"
-__plugin_description__ = "The OctoPrint Plugin Manager allows managing OctoPrint plugins"
-__plugin_version__ = "0.1"
-__plugin_author__ = "The OctoPrint Project"
-__plugin_url__ = "http://octoprint.org"
-
 import octoprint.plugin
 
 from octoprint.settings import valid_boolean_trues
 from flask import jsonify, make_response
-
-default_settings = dict()
-s = octoprint.plugin.plugin_settings("plugin_manager", defaults=default_settings)
 
 class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
                           octoprint.plugin.TemplatePlugin,
@@ -146,5 +137,5 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			# enable plugin
 			pass
 
-
+__plugin_name__ = "Plugin Manager"
 __plugin_implementations__ = [PluginManagerPlugin()]
