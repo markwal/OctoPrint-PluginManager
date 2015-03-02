@@ -1,6 +1,10 @@
-# Plugin Manager plugin for OctoPrint
+----
 
-**WARNING** Not functional yet, so far only lists the existing plugins which isn't very useful at all.
+**Note**: This plugin is a work in progress and as of yet unreleased. Please do not use it until it's officially released. No support will be given if you do anyways.
+
+----
+
+# Plugin Manager plugin for OctoPrint
 
 ## Setup
 
