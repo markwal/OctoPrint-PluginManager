@@ -138,4 +138,4 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			pass
 
 __plugin_name__ = "Plugin Manager"
-__plugin_implementations__ = [PluginManagerPlugin()]
+__plugin_implementation__ = PluginManagerPlugin()
