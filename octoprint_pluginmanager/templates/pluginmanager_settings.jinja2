@@ -20,7 +20,7 @@
             </div>
         </td>
         <td class="settings_plugin_plugin_manager_plugins_actions">
-            <a href="#" data-bind="css: {disabled: key == 'pluginmanager', 'icon-circle': enabled || pending_enable, 'icon-circle-blank': !enabled || pending_disable}, attr: {title: $root.toggleButtonTitle($data)}, enable: key != 'pluginmanager', click: function() { $root.togglePlugin($data) }"></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind="css: {disabled: bundled || key == 'pluginmanager' || pending_uninstall}, enable: !bundled && key != 'pluginmanager' && !pending_uninstall, click: function() { $root.uninstallPlugin($data) }"></a>
+            <a href="#" data-bind="css: $root.toggleButtonCss($data), attr: {title: $root.toggleButtonTitle($data)}, enable: key != 'pluginmanager', click: function() { $root.togglePlugin($data) }"></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind="css: {disabled: bundled || key == 'pluginmanager' || pending_uninstall}, enable: !bundled && key != 'pluginmanager' && !pending_uninstall, click: function() { $root.uninstallPlugin($data) }"></a>
         </td>
     </tr>
     </tbody>

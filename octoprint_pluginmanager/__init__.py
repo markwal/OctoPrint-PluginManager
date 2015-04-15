@@ -188,6 +188,10 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		needs_restart = plugin.implementation and isinstance(plugin.implementation, octoprint.plugin.core.RestartNeedingPlugin)
 		needs_refresh = plugin.implementation and isinstance(plugin.implementation, octoprint.plugin.ReloadNeedingPlugin)
 
+		pending = ((command == "disable" and plugin.key in self._pending_enable) or (command == "enable" and plugin.key in self._pending_disable))
+		needs_restart_api = needs_restart and not pending
+		needs_refresh_api = needs_refresh and not pending
+
 		try:
 			if command == "disable":
 				self._mark_plugin_disabled(plugin, needs_restart=needs_restart)
@@ -199,7 +203,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		except octoprint.plugin.core.RestartNeedingPlugin:
 			result = dict(result=True, needs_restart=True, needs_refresh=True, plugin=self._to_external_representation(plugin))
 		else:
-			result = dict(result=True, needs_restart=needs_restart, needs_refresh=needs_refresh, plugin=self._to_external_representation(plugin))
+			result = dict(result=True, needs_restart=needs_restart_api, needs_refresh=needs_refresh_api, plugin=self._to_external_representation(plugin))
 
 		self._send_result_notification(command, result)
 		return jsonify(result)

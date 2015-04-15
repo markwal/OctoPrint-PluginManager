@@ -47,14 +47,7 @@ $(function() {
         self.togglePlugin = function(data) {
             if (data.key == "pluginmanager") return;
 
-            var command;
-            if (!data.enabled || data.pending_disable) {
-                command = "enable";
-            } else if (data.enabled || data.pending_enable) {
-                command = "disable";
-            } else {
-                return;
-            }
+            var command = self._getToggleCommand(data);
 
             var payload = {plugin: data.key};
             self._postCommand(command, payload, function(response) {
@@ -206,8 +199,19 @@ $(function() {
             self.workingOutput.scrollTop(self.workingOutput[0].scrollHeight - self.workingOutput.height());
         };
 
+        self._getToggleCommand = function(data) {
+            return ((!data.enabled || data.pending_disable) && !data.pending_enable) ? "enable" : "disable";
+        };
+
+        self.toggleButtonCss = function(data) {
+            var icon = self._getToggleCommand(data) == "enable" ? "icon-circle-blank" : "icon-circle";
+            var disabled = (data.key == "pluginmanager") ? " disabled" : "";
+
+            return icon + disabled;
+        };
+
         self.toggleButtonTitle = function(data) {
-            return (!data.enabled || data.pending_disable) ? gettext("Enable Plugin") : gettext("Disable Plugin");
+            return self._getToggleCommand(data) == "enable" ? gettext("Enable Plugin") : gettext("Disable Plugin");
         };
 
         self.onBeforeBinding = function() {
