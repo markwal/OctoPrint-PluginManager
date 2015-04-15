@@ -24,6 +24,12 @@ $(function() {
         );
 
         self.installUrl = ko.observable();
+        self.loglines = ko.observableArray([]);
+
+        self.working = ko.observable(false);
+        self.workingTitle = ko.observable();
+        self.workingDialog = undefined;
+        self.workingOutput = undefined;
 
         self.fromResponse = function(data) {
             self.plugins.updateItems(data.plugins);
@@ -41,40 +47,22 @@ $(function() {
         self.togglePlugin = function(data) {
             if (data.key == "pluginmanager") return;
 
-            var titleSuccess, textSuccess, textRestart, textReload, titleError, textError;
             var command;
             if (!data.enabled || data.pending_disable) {
                 command = "enable";
-                titleSuccess = _.sprintf(gettext("Plugin %(name)s enabled"), {name: data.name});
-                textSuccess = gettext("The plugin was enabled successfully.");
-                textRestart = gettext("The plugin was enabled successfully, however a restart of OctoPrint is needed for that to take effect.");
-                textReload = gettext("The plugin was enabled successfully, however a reload of the page is needed for that to take effect.");
             } else if (data.enabled || data.pending_enable) {
                 command = "disable";
-                titleSuccess = _.sprintf(gettext("Plugin %(name)s disabled"), {name: data.name});
-                textSuccess = gettext("The plugin was disabled successfully.");
-                textRestart = gettext("The plugin was disabled successfully, however a restart of OctoPrint is needed for that to take effect.");
-                textReload = gettext("The plugin was disabled successfully, however a reload of the page is needed for that to take effect.");
             } else {
                 return;
             }
 
-            titleError = gettext("Something went wrong");
-            textError = gettext("Toggling the plugin failed, please see the log for details.");
-            textErrorReason = gettext("Toggling the plugin failed: %(reason)s");
-
             var payload = {plugin: data.key};
             self._postCommand(command, payload, function(response) {
-                if (!response.result && response.hasOwnProperty("reason") && response.reason) {
-                    textError = _.sprintf(textErrorReason, {reason: response.reason});
-                }
-
-                self._displayNotification(response, titleSuccess, textSuccess, textRestart, textReload, titleError, textError);
                 self.requestData();
             }, function() {
                 new PNotify({
-                    title: titleError,
-                    text: textError,
+                    title: gettext("Something went wrong"),
+                    text: gettext("Please consult octoprint.log for details"),
                     type: "error",
                     hide: false
                 })
@@ -85,35 +73,22 @@ $(function() {
             var url = self.installUrl();
             if (!url) return;
 
-            var titleSuccess, textSuccess, textRestart, textReload, titleError, textError, textErrorReason;
-            titleSuccess = gettext("Plugin %(name)s installed");
-            textSuccess = gettext("The plugin was installed successfully");
-            textRestart = gettext("The plugin was installed successfully, however a restart of OctoPrint is needed for that to take effect.");
-            textReload = gettext("The plugin was installed successfully, however a reload of the page is needed for that to take effect.");
-            titleError = gettext("Something went wrong");
-            textError = gettext("Installing the plugin from URL %(url)s failed, please see the log for details.");
-            textErrorReason = gettext("Installing the plugin from URL %(url)s failed: %(reason)s");
+            self._markWorking(gettext("Installing plugin..."), _.sprintf(gettext("Installing plugin from %(url)s..."), {url: url}));
 
             var command = "install";
             var payload = {url: url};
             self._postCommand(command, payload, function(response) {
-                var name = (response.hasOwnProperty("plugin")) ? response.plugin.name : "Unknown";
-
-                if (!response.result && response.hasOwnProperty("reason") && response.reason) {
-                    textError = _.sprintf(textErrorReason, {url: url, reason: response.reason});
-                } else {
-                    textError = _.sprintf(textError, {url: url});
-                }
-
-                self._displayNotification(response, _.sprintf(titleSuccess, {name: name}), textSuccess, textRestart, textReload, titleError, textError);
                 self.requestData();
+                self._markDone();
+                self.installUrl("");
             }, function() {
                 new PNotify({
-                    title: titleError,
-                    text: textError,
+                    title: gettext("Something went wrong"),
+                    text: gettext("Please consult octoprint.log for details"),
                     type: "error",
                     hide: false
-                })
+                });
+                self._markDone();
             });
         };
 
@@ -121,32 +96,21 @@ $(function() {
             if (data.bundled) return;
             if (data.key == "pluginmanager") return;
 
-            var titleSuccess, textSuccess, textRestart, textReload, titleError, textError, textErrorReason;
-
-            titleSuccess = _.sprintf(gettext("Plugin %(name)s uninstalled"), {name: data.name});
-            textSuccess = gettext("The plugin was uninstalled successfully");
-            textRestart = gettext("The plugin was uninstalled successfully, however a restart of OctoPrint is needed for that to take effect.");
-            textReload = gettext("The plugin was uninstalled successfully, however a reload of the page is needed for that to take effect.");
-            titleError = gettext("Something went wrong");
-            textError = gettext("Uninstalling the plugin failed, please see the log for details.");
-            textErrorReason = gettext("Uninstalling the plugin failed: %(reason)s");
+            self._markWorking(gettext("Uninstalling plugin..."), _.sprintf(gettext("Uninstalling plugin %(name)s"), {name: data.name}));
 
             var command = "uninstall";
             var payload = {plugin: data.key};
             self._postCommand(command, payload, function(response) {
-                if (!response.result && response.hasOwnProperty("reason") && response.reason) {
-                    textError = _.sprintf(textErrorReason, {reason: response.reason});
-                }
-
-                self._displayNotification(response, titleSuccess, textSuccess, textRestart, textReload, titleError, textError);
-                self.requestData()
+                self.requestData();
+                self._markDone();
             }, function() {
                 new PNotify({
-                    title: titleError,
-                    text: textError,
+                    title: gettext("Something went wrong"),
+                    text: gettext("Please consult octoprint.log for details"),
                     type: "error",
                     hide: false
-                })
+                });
+                self._markDone();
             });
         };
 
@@ -222,6 +186,26 @@ $(function() {
             $.ajax(params);
         };
 
+        self._markWorking = function(title, line) {
+            self.working(true);
+            self.workingTitle(title);
+
+            self.loglines.removeAll();
+            self.loglines.push({line: line, stream: "message"});
+
+            self.workingDialog.modal("show");
+        };
+
+        self._markDone = function() {
+            self.working(false);
+            self.loglines.push({line: gettext("Done!"), stream: "message"});
+            self._scrollWorkingOutputToEnd();
+        };
+
+        self._scrollWorkingOutputToEnd = function() {
+            self.workingOutput.scrollTop(self.workingOutput[0].scrollHeight - self.workingOutput.height());
+        };
+
         self.toggleButtonTitle = function(data) {
             return (!data.enabled || data.pending_disable) ? gettext("Enable Plugin") : gettext("Disable Plugin");
         };
@@ -231,8 +215,116 @@ $(function() {
             self.requestData();
         };
 
+        self.onStartup = function() {
+            self.workingDialog = $("#settings_plugin_pluginmanager_workingdialog");
+            self.workingOutput = $("#settings_plugin_pluginmanager_workingdialog_output");
+        };
+
         self.onDataUpdaterReconnect = function() {
             self.requestData();
+        };
+
+        self.onDataUpdaterPluginMessage = function(plugin, data) {
+            if (plugin != "pluginmanager") {
+                return;
+            }
+
+            if (!data.hasOwnProperty("type")) {
+                return;
+            }
+
+            var messageType = data.type;
+
+            if (messageType == "loglines" && self.working()) {
+                _.each(data.loglines, function(line) {
+                    self.loglines.push(line);
+                });
+                self._scrollWorkingOutputToEnd();
+            } else if (messageType == "result") {
+                var titleSuccess, textSuccess, textRestart, textReload, titleError, textError;
+                var action = data.action;
+
+                var name = "Unknown";
+                if (action == "install") {
+                    if (data.hasOwnProperty("plugin")) {
+                        name = data.plugin.name;
+                    }
+
+                    titleSuccess = _.sprintf(gettext("Plugin %(name)s installed"), {name: name});
+                    textSuccess = gettext("The plugin was installed successfully");
+                    textRestart = gettext("The plugin was installed successfully, however a restart of OctoPrint is needed for that to take effect.");
+                    textReload = gettext("The plugin was installed successfully, however a reload of the page is needed for that to take effect.");
+
+                    titleError = gettext("Something went wrong");
+                    var url = "unknown";
+                    if (data.hasOwnProperty("url")) {
+                        url = data.url;
+                    }
+
+                    if (data.hasOwnProperty("reason")) {
+                        textError = _.sprintf(gettext("Installing the plugin from URL \"%(url)s\" failed: %(reason)s"), {reason: data.reason, url: url});
+                    } else {
+                        textError = _.sprintf(gettext("Installing the plugin from URL \"%(url)s\" failed, please see the log for details."), {url: url});
+                    }
+
+                } else if (action == "uninstall") {
+                    if (data.hasOwnProperty("plugin")) {
+                        name = data.plugin.name;
+                    }
+
+                    titleSuccess = _.sprintf(gettext("Plugin %(name)s uninstalled"), {name: name});
+                    textSuccess = gettext("The plugin was uninstalled successfully");
+                    textRestart = gettext("The plugin was uninstalled successfully, however a restart of OctoPrint is needed for that to take effect.");
+                    textReload = gettext("The plugin was uninstalled successfully, however a reload of the page is needed for that to take effect.");
+
+                    titleError = gettext("Something went wrong");
+                    if (data.hasOwnProperty("reason")) {
+                        textError = _.sprintf(gettext("Uninstalling the plugin failed: %(reason)s"), {reason: data.reason});
+                    } else {
+                        textError = gettext("Uninstalling the plugin failed, please see the log for details.");
+                    }
+
+                } else if (action == "enable") {
+                    if (data.hasOwnProperty("plugin")) {
+                        name = data.plugin.name;
+                    }
+
+                    titleSuccess = _.sprintf(gettext("Plugin %(name)s enabled"), {name: name});
+                    textSuccess = gettext("The plugin was enabled successfully.");
+                    textRestart = gettext("The plugin was enabled successfully, however a restart of OctoPrint is needed for that to take effect.");
+                    textReload = gettext("The plugin was enabled successfully, however a reload of the page is needed for that to take effect.");
+
+                    titleError = gettext("Something went wrong");
+                    if (data.hasOwnProperty("reason")) {
+                        textError = _.sprintf(gettext("Toggling the plugin failed: %(reason)s"), {reason: data.reason});
+                    } else {
+                        textError = gettext("Toggling the plugin failed, please see the log for details.");
+                    }
+
+                } else if (action == "disable") {
+                    if (data.hasOwnProperty("plugin")) {
+                        name = data.plugin.name;
+                    }
+
+                    titleSuccess = _.sprintf(gettext("Plugin %(name)s disabled"), {name: name});
+                    textSuccess = gettext("The plugin was disabled successfully.");
+                    textRestart = gettext("The plugin was disabled successfully, however a restart of OctoPrint is needed for that to take effect.");
+                    textReload = gettext("The plugin was disabled successfully, however a reload of the page is needed for that to take effect.");
+
+                    titleError = gettext("Something went wrong");
+                    if (data.hasOwnProperty("reason")) {
+                        textError = _.sprintf(gettext("Toggling the plugin failed: %(reason)s"), {reason: data.reason});
+                    } else {
+                        textError = gettext("Toggling the plugin failed, please see the log for details.");
+                    }
+
+                } else {
+                    return;
+                }
+
+                self._displayNotification(data, titleSuccess, textSuccess, textRestart, textReload, titleError, textError);
+                self.requestData();
+            }
         };
     }
 

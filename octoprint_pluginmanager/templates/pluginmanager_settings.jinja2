@@ -11,15 +11,16 @@
     <tr>
         <td class="settings_plugin_plugin_manager_plugins_name">
             <div data-bind="css: {muted: !enabled}"><span data-bind="text: name"></span> <span data-bind="visible: version">(<span data-bind="text: version"></span>)</span> <i title="{{ _('Bundled') }}" class="icon-th-large" data-bind="visible: bundled"></i> <i title="Restart needed" class="icon-refresh" data-bind="visible: pending_enable || pending_disable || pending_uninstall"></i> <i title="Uninstalled" class="icon-remove" data-bind="visible: pending_uninstall"></i></div>
-            <div><small class="muted" data-bind="text: description"></small></div>
+            <div><small class="muted" data-bind="text: description">&nbsp;</small></div>
             <div data-bind="css: {muted: !enabled}">
                 <small data-bind="visible: url"><i class="icon-home"></i> <a data-bind="attr: {href: url}">{{ _('Homepage') }}</a></small>
                 <small data-bind="visible: license"><i class="icon-legal"></i> <span data-bind="text: license"></span></small>
                 <small data-bind="visible: author"><i class="icon-user"></i> <span data-bind="text: author"></span></small>
+                <small>&nbsp;</small>
             </div>
         </td>
         <td class="settings_plugin_plugin_manager_plugins_actions">
-            <a href="#" data-bind="css: {'icon-circle': enabled || pending_enable, 'icon-circle-blank': !enabled || pending_disable}, attr: {title: $root.toggleButtonTitle($data)}, click: function() { $root.togglePlugin($data) }"></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind="css: {disabled: bundled || pending_uninstall}, enable: !bundled && !pending_uninstall, click: function() { $root.uninstallPlugin($data) }"></a>
+            <a href="#" data-bind="css: {disabled: key == 'pluginmanager', 'icon-circle': enabled || pending_enable, 'icon-circle-blank': !enabled || pending_disable}, attr: {title: $root.toggleButtonTitle($data)}, enable: key != 'pluginmanager', click: function() { $root.togglePlugin($data) }"></a>&nbsp;|&nbsp;<a href="#" class="icon-trash" title="{{ _('Uninstall Plugin') }}" data-bind="css: {disabled: bundled || key == 'pluginmanager' || pending_uninstall}, enable: !bundled && key != 'pluginmanager' && !pending_uninstall, click: function() { $root.uninstallPlugin($data) }"></a>
         </td>
     </tr>
     </tbody>
@@ -52,4 +53,15 @@
     </div>
 </form>
 
-
+<div id="settings_plugin_pluginmanager_workingdialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3 data-bind="text: workingTitle"></h3>
+    </div>
+    <div class="modal-body">
+        <pre id="settings_plugin_pluginmanager_workingdialog_output" class="terminal pre-scrollable" style="height: 170px" data-bind="foreach: loglines"><span data-bind="text: line, css: {stdout: stream == 'stdout', stderr: stream == 'stderr'}"></span><br></pre>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" data-bind="enable: !$root.working()" aria-hidden="true">{{ _('Close') }}</button>
+    </div>
+</div>
