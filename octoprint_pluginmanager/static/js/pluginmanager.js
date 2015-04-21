@@ -282,7 +282,12 @@ $(function() {
 
         self.onBeforeBinding = function() {
             self.settings = self.settingsViewModel.settings;
-            self.requestData(true);
+        };
+
+        self.onUserLoggedIn = function(user) {
+            if (user.admin) {
+                self.requestData(true);
+            }
         };
 
         self.onStartup = function() {
@@ -298,10 +303,6 @@ $(function() {
                 alwaysVisible: true,
                 scrollBy: "102px"
             });
-        };
-
-        self.onDataUpdaterReconnect = function() {
-            self.requestData(true);
         };
 
         self.onDataUpdaterPluginMessage = function(plugin, data) {
