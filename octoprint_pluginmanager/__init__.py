@@ -15,6 +15,7 @@ from flask import jsonify, make_response
 import logging
 import sarge
 import sys
+import requests
 
 class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
                           octoprint.plugin.TemplatePlugin,
@@ -27,6 +28,8 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		self._pending_disable = set()
 		self._pending_install = set()
 		self._pending_uninstall = set()
+
+		self._repository_plugins = []
 
 	def initialize(self):
 		self._console_logger = logging.getLogger("octoprint.plugins.pluginmanager.console")
@@ -41,6 +44,13 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		self._console_logger.addHandler(console_logging_handler)
 		self._console_logger.setLevel(logging.DEBUG)
 		self._console_logger.propagate = False
+
+	##~~ SettingsPlugin
+
+	def get_settings_defaults(self):
+		return dict(
+			repository="http://plugins.octoprint.org/plugins.json"
+		)
 
 	##~~ AssetPlugin
 
@@ -65,7 +75,8 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			"install": ["url"],
 			"uninstall": ["plugin"],
 			"enable": ["plugin"],
-			"disable": ["plugin"]
+			"disable": ["plugin"],
+			"refresh_repository": []
 		}
 
 	def on_api_get(self, request):
@@ -75,7 +86,10 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		for name, plugin in plugins.items():
 			result.append(self._to_external_representation(plugin))
 
-		return jsonify(plugins=result)
+		if "repository" in request.values and request.values["repository"] in valid_boolean_trues:
+			self._refresh_repository()
+
+		return jsonify(plugins=result, repository=self._repository_plugins)
 
 	def on_api_command(self, command, data):
 		if command == "install":
@@ -97,6 +111,10 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 
 			plugin = self._plugin_manager.plugins[plugin_name]
 			return self.command_toggle(plugin, command)
+
+		elif command == "refresh_repository":
+			self._refresh_repository()
+			return jsonify(repository=self._repository_plugins)
 
 	def command_install(self, url, force=False):
 		# TODO need to solve issue of users externally modifying plugin folder, which could lead to more than
@@ -291,6 +309,11 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 				self._pending_enable.remove(plugin.key)
 			elif plugin.enabled and plugin.key not in self._pending_disable:
 				self._pending_disable.add(plugin.key)
+
+	def _refresh_repository(self):
+		import requests
+		r = requests.get(self._settings.get(["repository"]))
+		self._repository_plugins = r.json()
 
 	def _to_external_representation(self, plugin):
 		return dict(

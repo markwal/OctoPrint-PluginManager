@@ -37,21 +37,7 @@
     </ul>
 </div>
 
-<h3>Install new Plugin</h3>
-
-<form class="form-horizontal">
-    <div class="control-group">
-        <label class="control-label">{{ _('URL') }}</label>
-        <div class="controls">
-            <input type="text" class="input-block-level" data-bind="value: installUrl" >
-        </div>
-    </div>
-    <div class="control-group">
-        <div class="controls">
-            <button type="submit" class="btn" data-bind="click: function() { $root.installPlugin(); }">{{ _('Install') }}</button>
-        </div>
-    </div>
-</form>
+<button class="btn btn-block" data-bind="click: $root.showRepository">{{ _('Get More...') }}</button>
 
 <div id="settings_plugin_pluginmanager_workingdialog" class="modal hide fade">
     <div class="modal-header">
@@ -63,5 +49,69 @@
     </div>
     <div class="modal-footer">
         <button class="btn" data-dismiss="modal" data-bind="enable: !$root.working()" aria-hidden="true">{{ _('Close') }}</button>
+    </div>
+</div>
+
+<div id="settings_plugin_pluginmanager_repositorydialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>{{ _('Install new Plugins...') }}</h3>
+    </div>
+    <div class="modal-body">
+        <h5 style="position: relative">
+            {{ _('... from the <a href="%(url)s" target="_blank">Plugin Repository</a>', url='http://plugins.octoprint.org') }}
+            <a class="dropdown-toggle pull-right" data-toggle="dropdown" href="#">
+                <span class="icon-wrench"></span>
+                <ul class="dropdown-menu pull-right">
+                    <li><a href="#" data-bind="click: function() { repositoryplugins.changeSorting('title'); }"><i class="icon-ok" data-bind="style: {visibility: repositoryplugins.currentSorting() == 'title' ? 'visible' : 'hidden'}"></i> {{ _('Sort by title') }} ({{ _('ascending') }})</a></li>
+                    <li><a href="#" data-bind="click: function() { repositoryplugins.changeSorting('published'); }"><i class="icon-ok" data-bind="style: {visibility: repositoryplugins.currentSorting() == 'published' ? 'visible' : 'hidden'}"></i> {{ _('Sort by publication date') }} ({{ _('descending') }})</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#" data-bind="click: function() { repositoryplugins.toggleFilter('filter_installed'); }"><i class="icon-ok" data-bind="style: {visibility: _.contains(repositoryplugins.currentFilters(), 'filter_installed') ? 'visible' : 'hidden'}"></i> {{ _('Only show uninstalled plugins') }}</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#" data-bind="click: function() { refreshRepository(); }"><i class="icon-refresh"></i> {{ _('Refresh list from repository') }}</a></li>
+                </ul>
+            </a>
+        </h5>
+
+        <div id="settings_plugin_pluginmanager_repositorydialog_list" data-bind="slimScrolledForeach: repositoryplugins.paginatedItems">
+            <div class="entry">
+                <div class="row-fluid">
+                    <div class="span9">
+                        <div><span data-bind="text: title"></span></div>
+                        <div><small class="muted" data-bind="text: description">&nbsp;</small></div>
+                        <div>
+                            <small data-bind="visible: page"><i class="icon-info"></i> <a data-bind="attr: {href: page}" target="_blank">{{ _('Details') }}</a></small>
+                            <small data-bind="visible: homepage"><i class="icon-home"></i> <a data-bind="attr: {href: homepage}" target="_blank">{{ _('Homepage') }}</a></small>
+                            <small data-bind="visible: license"><i class="icon-legal"></i> <span data-bind="text: license"></span></small>
+                            <small data-bind="visible: author"><i class="icon-user"></i> <span data-bind="text: author"></span></small>
+                            <small>&nbsp;</small>
+                        </div>
+                    </div>
+                    <div class="span3">
+                        <button class="btn btn-primary btn-block" data-bind="enable: !$root.installed($data), css: {disabled: $root.installed($data)}, click: function() { $root.installFromRepository($data); }"><i class="icon-add"></i> {{ _('Install') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5>{{ _('... from URL') }}</h5>
+
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">{{ _('URL') }}</label>
+                <div class="controls">
+                    <input type="text" class="input-block-level" data-bind="value: installUrl" >
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <button class="btn btn-primary" data-bind="click: function() { $root.installPlugin(); }">{{ _('Install') }}</button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Close') }}</button>
     </div>
 </div>

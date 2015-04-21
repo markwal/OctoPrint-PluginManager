@@ -6,7 +6,7 @@ $(function() {
         self.settingsViewModel = parameters[1];
 
         self.plugins = new ItemListHelper(
-            "plugins",
+            "plugin.pluginmanager.installedplugins",
             {
                 "name": function (a, b) {
                     // sorts ascending
@@ -23,8 +23,36 @@ $(function() {
             5
         );
 
+        self.repositoryplugins = new ItemListHelper(
+            "plugin.pluginmanager.repositoryplugins",
+            {
+                "title": function (a, b) {
+                    // sorts ascending
+                    if (a["title"].toLocaleLowerCase() < b["title"].toLocaleLowerCase()) return -1;
+                    if (a["title"].toLocaleLowerCase() > b["title"].toLocaleLowerCase()) return 1;
+                    return 0;
+                },
+                "published": function (a, b) {
+                    // sorts descending
+                    if (a["published"].toLocaleLowerCase() > b["published"].toLocaleLowerCase()) return -1;
+                    if (a["published"].toLocaleLowerCase() < b["published"].toLocaleLowerCase()) return 1;
+                    return 0;
+                }
+            },
+            {
+                "filter_installed": function(plugin) {
+                    return !self.installed(plugin);
+                }
+            },
+            "title",
+            ["filter_installed"],
+            [],
+            5
+        );
+
         self.installUrl = ko.observable();
         self.loglines = ko.observableArray([]);
+        self.installedPlugins = ko.observableArray([]);
 
         self.working = ko.observable(false);
         self.workingTitle = ko.observable();
@@ -32,12 +60,26 @@ $(function() {
         self.workingOutput = undefined;
 
         self.fromResponse = function(data) {
-            self.plugins.updateItems(data.plugins);
+            self._fromPluginsResponse(data.plugins);
+            self._fromRepositoryResponse(data.repository)
         };
 
-        self.requestData = function() {
+        self._fromPluginsResponse = function(data) {
+            var installedPlugins = [];
+            _.each(data, function(plugin) {
+                installedPlugins.push(plugin.key);
+            });
+            self.installedPlugins(installedPlugins);
+            self.plugins.updateItems(data);
+        };
+
+        self._fromRepositoryResponse = function(data) {
+            self.repositoryplugins.updateItems(data);
+        };
+
+        self.requestData = function(includeRepo) {
             $.ajax({
-                url: API_BASEURL + "plugin/pluginmanager",
+                url: API_BASEURL + "plugin/pluginmanager" + ((includeRepo) ? "?repository=true" : ""),
                 type: "GET",
                 dataType: "json",
                 success: self.fromResponse
@@ -62,8 +104,22 @@ $(function() {
             });
         };
 
-        self.installPlugin = function() {
-            var url = self.installUrl();
+        self.showRepository = function() {
+            self.repositoryDialog.modal("show");
+        };
+
+        self.pluginDetails = function(data) {
+            window.open(data.page);
+        };
+
+        self.installFromRepository = function(data) {
+            self.installPlugin(data.archive);
+        };
+
+        self.installPlugin = function(url) {
+            if (url === undefined) {
+                url = self.installUrl();
+            }
             if (!url) return;
 
             self._markWorking(gettext("Installing plugin..."), _.sprintf(gettext("Installing plugin from %(url)s..."), {url: url}));
@@ -105,6 +161,16 @@ $(function() {
                 });
                 self._markDone();
             });
+        };
+
+        self.refreshRepository = function() {
+            self._postCommand("refresh_repository", {}, function(data) {
+                self._fromRepositoryResponse(data.repository);
+            })
+        };
+
+        self.installed = function(data) {
+            return _.includes(self.installedPlugins(), data.id);
         };
 
         self._displayNotification = function(response, titleSuccess, textSuccess, textRestart, textReload, titleError, textError) {
@@ -216,16 +282,26 @@ $(function() {
 
         self.onBeforeBinding = function() {
             self.settings = self.settingsViewModel.settings;
-            self.requestData();
+            self.requestData(true);
         };
 
         self.onStartup = function() {
             self.workingDialog = $("#settings_plugin_pluginmanager_workingdialog");
             self.workingOutput = $("#settings_plugin_pluginmanager_workingdialog_output");
+            self.repositoryDialog = $("#settings_plugin_pluginmanager_repositorydialog");
+
+            $("#settings_plugin_pluginmanager_repositorydialog_list").slimScroll({
+                height: "306px",
+                size: "5px",
+                distance: "0",
+                railVisible: true,
+                alwaysVisible: true,
+                scrollBy: "102px"
+            });
         };
 
         self.onDataUpdaterReconnect = function() {
-            self.requestData();
+            self.requestData(true);
         };
 
         self.onDataUpdaterPluginMessage = function(plugin, data) {
