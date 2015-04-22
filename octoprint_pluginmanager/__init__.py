@@ -49,7 +49,8 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 
 	def get_settings_defaults(self):
 		return dict(
-			repository="http://plugins.octoprint.org/plugins.json"
+			repository="http://plugins.octoprint.org/plugins.json",
+			pip=None
 		)
 
 	##~~ AssetPlugin
@@ -166,7 +167,11 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		if plugin.origin[0] == "entry_point":
 			# plugin is installed through entry point, need to use pip to uninstall it
 			pip_args = ["uninstall", "--yes", plugin.origin[2]]
-			self._call_pip(pip_args)
+			try:
+				self._call_pip(pip_args)
+			except:
+				self._logger.exception("Could not uninstall plugin via pip")
+				return make_response("Could not uninstall plugin via pip, see the log for more details", 500)
 
 		elif plugin.origin[0] == "folder":
 			# plugin is installed via a plugin folder, need to use rmtree to get rid of it
@@ -232,13 +237,40 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		self._plugin_manager.send_plugin_message(self._identifier, notification)
 
 	def _call_pip(self, args):
-		python = sys.executable
+		pip_command = self._settings.get(["pip"])
+		if pip_command is None:
+			import os
+			python_command = sys.executable
+			binary_dir = os.path.dirname(python_command)
 
-		command = [python, "-m", "pip"] + args
+			pip_command = os.path.join(binary_dir, "pip")
+			if sys.platform == "win32":
+				# Windows is a bit special... first of all the file will be called pip.exe, not just pip, and secondly
+				# for a non-virtualenv install (e.g. global install) the pip binary will not be located in the
+				# same folder as python.exe, but in a subfolder Scripts, e.g.
+				#
+				# C:\Python2.7\
+				#  |- python.exe
+				#  `- Scripts
+				#      `- pip.exe
+
+				# virtual env?
+				pip_command = os.path.join(binary_dir, "pip.exe")
+
+				if not os.path.isfile(pip_command):
+					# nope, let's try the Scripts folder then
+					scripts_dir = os.path.join(binary_dir, "Scripts")
+					if os.path.isdir(scripts_dir):
+						pip_command = os.path.join(scripts_dir, "pip.exe")
+
+			if not os.path.isfile(pip_command) or not os.access(pip_command, os.X_OK):
+				raise RuntimeError("No pip path configured and {pip_command} does not exist or is not executable, can't install".format(**locals()))
+
+		command = [pip_command] + args
 
 		self._logger.debug("Calling: {}".format(" ".join(command)))
 
-		p = sarge.run(command, shell=True, async=True, stdout=sarge.Capture(), stderr=sarge.Capture())
+		p = sarge.run(" ".join(command), shell=True, async=True, stdout=sarge.Capture(), stderr=sarge.Capture())
 		p.wait_events()
 
 		try:
