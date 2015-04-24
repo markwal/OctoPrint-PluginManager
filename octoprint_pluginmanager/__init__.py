@@ -170,12 +170,12 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			try:
 				self._call_pip(pip_args)
 			except:
-				self._logger.exception("Could not uninstall plugin via pip")
+				self._logger.exception(u"Could not uninstall plugin via pip")
 				return make_response("Could not uninstall plugin via pip, see the log for more details", 500)
 
 		elif plugin.origin[0] == "folder":
 			# plugin is installed via a plugin folder, need to use rmtree to get rid of it
-			self._log_stdout("Deleting plugin from {folder}".format(folder=plugin.location))
+			self._log_stdout(u"Deleting plugin from {folder}".format(folder=plugin.location))
 			import shutil
 			import os
 			shutil.rmtree(os.path.realpath(plugin.location))
@@ -187,7 +187,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			try:
 				self._plugin_manager.disable_plugin(plugin.key, plugin=plugin)
 			except octoprint.plugin.core.PluginLifecycleException as e:
-				self._logger.exception("Problem disabling plugin {name}".format(name=plugin.key))
+				self._logger.exception(u"Problem disabling plugin {name}".format(name=plugin.key))
 				result = dict(result=False, uninstalled=True, disabled=False, unloaded=False, reason=e.reason)
 				self._send_result_notification("uninstall", result)
 				return jsonify(result)
@@ -195,7 +195,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			try:
 				self._plugin_manager.unload_plugin(plugin.key)
 			except octoprint.plugin.core.PluginLifecycleException as e:
-				self._logger.exception("Problem unloading plugin {name}".format(name=plugin.key))
+				self._logger.exception(u"Problem unloading plugin {name}".format(name=plugin.key))
 				result = dict(result=False, uninstalled=True, disabled=True, unloaded=False, reason=e.reason)
 				self._send_result_notification("uninstall", result)
 				return jsonify(result)
@@ -221,7 +221,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 			elif command == "enable":
 				self._mark_plugin_enabled(plugin, needs_restart=needs_restart)
 		except octoprint.plugin.core.PluginLifecycleException as e:
-			self._logger.exception("Problem toggling enabled state of {name}: {reason}".format(name=plugin.key, reason=e.reason))
+			self._logger.exception(u"Problem toggling enabled state of {name}: {reason}".format(name=plugin.key, reason=e.reason))
 			result = dict(result=False, reason=e.reason)
 		except octoprint.plugin.core.RestartNeedingPlugin:
 			result = dict(result=True, needs_restart=True, needs_refresh=True, plugin=self._to_external_representation(plugin))
@@ -264,11 +264,11 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 						pip_command = os.path.join(scripts_dir, "pip.exe")
 
 			if not os.path.isfile(pip_command) or not os.access(pip_command, os.X_OK):
-				raise RuntimeError("No pip path configured and {pip_command} does not exist or is not executable, can't install".format(**locals()))
+				raise RuntimeError(u"No pip path configured and {pip_command} does not exist or is not executable, can't install".format(**locals()))
 
 		command = [pip_command] + args
 
-		self._logger.debug("Calling: {}".format(" ".join(command)))
+		self._logger.debug(u"Calling: {}".format(" ".join(command)))
 
 		p = sarge.run(" ".join(command), shell=True, async=True, stdout=sarge.Capture(), stderr=sarge.Capture())
 		p.wait_events()
@@ -310,7 +310,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 
 		self._plugin_manager.send_plugin_message(self._identifier, dict(type="loglines", loglines=[dict(line=line, stream=stream) for line in lines]))
 		for line in lines:
-			self._console_logger.debug("{prefix} {line}".format(**locals()))
+			self._console_logger.debug(u"{prefix} {line}".format(**locals()))
 
 	def _mark_plugin_enabled(self, plugin, needs_restart=False):
 		disabled_list = list(self._settings.global_get(["plugins", "_disabled"]))
