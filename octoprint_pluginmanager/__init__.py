@@ -90,7 +90,7 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 		if "repository" in request.values and request.values["repository"] in valid_boolean_trues:
 			self._refresh_repository()
 
-		return jsonify(plugins=result, repository=self._repository_plugins)
+		return jsonify(plugins=result, repository=self._repository_plugins, os=self._get_os(), octoprint=self._get_octoprint_version())
 
 	def on_api_command(self, command, data):
 		if command == "install":
@@ -345,7 +345,49 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 	def _refresh_repository(self):
 		import requests
 		r = requests.get(self._settings.get(["repository"]))
-		self._repository_plugins = r.json()
+
+		current_os = self._get_os()
+		octoprint_version = self._get_octoprint_version()
+		if "-" in octoprint_version:
+			octoprint_version = octoprint_version[:octoprint_version.find("-")]
+
+		def map_repository_entry(entry):
+			result = dict(entry)
+			result["is_compatible"] = dict(
+				octoprint=True,
+				os=True
+			)
+
+			if "compatibility" in entry:
+				if "octoprint" in entry["compatibility"]:
+					import semantic_version
+					for octo_compat in entry["compatibility"]["octoprint"]:
+						s = semantic_version.Spec("=={}".format(octo_compat))
+						if semantic_version.Version(octoprint_version) in s:
+							break
+					else:
+						result["is_compatible"]["octoprint"] = False
+
+				if "os" in entry["compatibility"]:
+					result["is_compatible"]["os"] = current_os in entry["compatibility"]["os"]
+
+			return result
+
+		self._repository_plugins = map(map_repository_entry, r.json())
+
+	def _get_os(self):
+		if sys.platform == "win32":
+			return "windows"
+		elif sys.platform == "linux2":
+			return "linux"
+		elif sys.platform == "darwin":
+			return "macos"
+		else:
+			return "unknown"
+
+	def _get_octoprint_version(self):
+		from octoprint._version import get_versions
+		return get_versions()["version"]
 
 	def _to_external_representation(self, plugin):
 		return dict(

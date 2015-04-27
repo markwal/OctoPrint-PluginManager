@@ -42,10 +42,13 @@ $(function() {
             {
                 "filter_installed": function(plugin) {
                     return !self.installed(plugin);
+                },
+                "filter_incompatible": function(plugin) {
+                    return plugin.is_compatible.octoprint && plugin.is_compatible.os;
                 }
             },
             "title",
-            ["filter_installed"],
+            ["filter_installed", "filter_incompatible"],
             [],
             5
         );
@@ -171,6 +174,14 @@ $(function() {
 
         self.installed = function(data) {
             return _.includes(self.installedPlugins(), data.id);
+        };
+
+        self.isCompatible = function(data) {
+            return data.is_compatible.octoprint && data.is_compatible.os;
+        };
+
+        self.installButtonText = function(data) {
+            return self.isCompatible(data) ? (self.installed(data) ? gettext("Reinstall") : gettext("Install")) : gettext("Incompatible");
         };
 
         self._displayNotification = function(response, titleSuccess, textSuccess, textRestart, textReload, titleError, textError) {

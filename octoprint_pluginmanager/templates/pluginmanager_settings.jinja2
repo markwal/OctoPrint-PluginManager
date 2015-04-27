@@ -67,6 +67,7 @@
                     <li><a href="#" data-bind="click: function() { repositoryplugins.changeSorting('published'); }"><i class="icon-ok" data-bind="style: {visibility: repositoryplugins.currentSorting() == 'published' ? 'visible' : 'hidden'}"></i> {{ _('Sort by publication date') }} ({{ _('descending') }})</a></li>
                     <li class="divider"></li>
                     <li><a href="#" data-bind="click: function() { repositoryplugins.toggleFilter('filter_installed'); }"><i class="icon-ok" data-bind="style: {visibility: _.contains(repositoryplugins.currentFilters(), 'filter_installed') ? 'visible' : 'hidden'}"></i> {{ _('Only show uninstalled plugins') }}</a></li>
+                    <li><a href="#" data-bind="click: function() { repositoryplugins.toggleFilter('filter_incompatible'); }"><i class="icon-ok" data-bind="style: {visibility: _.contains(repositoryplugins.currentFilters(), 'filter_incompatible') ? 'visible' : 'hidden'}"></i> {{ _('Only show compatible plugins') }}</a></li>
                     <li class="divider"></li>
                     <li><a href="#" data-bind="click: function() { refreshRepository(); }"><i class="icon-refresh"></i> {{ _('Refresh list from repository') }}</a></li>
                 </ul>
@@ -88,7 +89,7 @@
                         </div>
                     </div>
                     <div class="span3">
-                        <button class="btn btn-primary btn-block" data-bind="enable: !$root.installed($data), css: {disabled: $root.installed($data)}, click: function() { $root.installFromRepository($data); }"><i class="icon-add"></i> {{ _('Install') }}</button>
+                        <button class="btn btn-primary btn-block" data-bind="enable: $root.isCompatible($data), css: {disabled: !$root.isCompatible($data)}, click: function() { if ($root.isCompatible($data)) { $root.installFromRepository($data); } else { return false; } }"><i class="icon-add"></i> <span data-bind="text: $root.installButtonText($data)"></span></button>
                     </div>
                 </div>
             </div>
