@@ -166,7 +166,11 @@ class PluginManagerPlugin(octoprint.plugin.SimpleApiPlugin,
 
 		if plugin.origin[0] == "entry_point":
 			# plugin is installed through entry point, need to use pip to uninstall it
-			pip_args = ["uninstall", "--yes", plugin.origin[2]]
+			origin = plugin.origin[3]
+			if origin is None:
+				origin = plugin.origin[2]
+
+			pip_args = ["uninstall", "--yes", origin]
 			try:
 				self._call_pip(pip_args)
 			except:
